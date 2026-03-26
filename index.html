@@ -75,7 +75,7 @@ tr:hover{background:#f8f9ff}
 
 /* Auth overlay styles */
 #auth-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a237e 0%,#283593 50%,#303f9f 100%);z-index:10000;display:flex;align-items:center;justify-content:center}
-#auth-overlay.hidden{display:none}
+#auth-overlay{display:none}#auth-overlay.hidden{display:none}
 .auth-box{background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.3);padding:40px;width:100%;max-width:420px;margin:16px}
 .auth-box h2{font-size:1.5rem;color:#1a237e;margin-bottom:6px;text-align:center}
 .auth-box .auth-subtitle{text-align:center;color:#78909c;font-size:.9rem;margin-bottom:24px}
@@ -100,57 +100,12 @@ tr:hover{background:#f8f9ff}
 </head>
 <body data-np-autofill-form-type="other" data-np-checked="1" data-np-watching="1">
 
-<!-- Auth Overlay -->
-<div id="auth-overlay">
-  <div class="auth-box">
-    <div class="auth-logo">🏥</div>
-    <h2 id="auth-title">Iniciar Sesión</h2>
-    <div class="auth-subtitle">Panel de Resultados de Laboratorio</div>
-
-    <!-- Login Form -->
-    <form id="login-form" onsubmit="return handleLogin(event)">
-      <label for="login-email">Correo electrónico</label>
-      <input type="email" id="login-email" required placeholder="correo@ejemplo.com">
-      <label for="login-password">Contraseña</label>
-      <input type="password" id="login-password" required placeholder="••••••••">
-      <div class="auth-recovery-link"><a onclick="showRecovery()">¿Olvidaste tu contraseña?</a></div>
-      <button type="submit" class="auth-btn" id="login-btn">Iniciar Sesión</button>
-    </form>
-
-    <!-- Signup Form -->
-    <form id="signup-form" style="display:none" onsubmit="return handleSignup(event)">
-      <label for="signup-name">Nombre completo</label>
-      <input type="text" id="signup-name" required placeholder="Tu nombre">
-      <label for="signup-email">Correo electrónico</label>
-      <input type="email" id="signup-email" required placeholder="correo@ejemplo.com">
-      <label for="signup-password">Contraseña</label>
-      <input type="password" id="signup-password" required minlength="6" placeholder="Mínimo 6 caracteres">
-      <button type="submit" class="auth-btn" id="signup-btn">Crear Cuenta</button>
-    </form>
-
-    <!-- Recovery Form -->
-    <form id="recovery-form" style="display:none" onsubmit="return handleRecovery(event)">
-      <label for="recovery-email">Correo electrónico</label>
-      <input type="email" id="recovery-email" required placeholder="correo@ejemplo.com">
-      <button type="submit" class="auth-btn" id="recovery-btn">Enviar Enlace de Recuperación</button>
-    </form>
-
-    <div id="auth-error" class="auth-error"></div>
-    <div id="auth-success" class="auth-success"></div>
-
-    <div class="auth-toggle" id="toggle-signup">
-      ¿No tienes cuenta? <a onclick="showSignup()">Regístrate</a>
-    </div>
-    <div class="auth-toggle" id="toggle-login" style="display:none">
-      ¿Ya tienes cuenta? <a onclick="showLogin()">Inicia Sesión</a>
-    </div>
-  </div>
-</div>
+<!-- Auth removed -->
 
 <div id="app-content">
 <div class="header">
   <h1>🏥 Panel de Resultados de Laboratorio</h1>
-  <div class="subtitle">Laboratorio LABIN — Costa Rica <span style="float:right"><button id="logout-btn" onclick="handleLogout()">Cerrar Sesión</button></span></div>
+  <div class="subtitle">Laboratorio LABIN — Costa Rica</div>
   <div class="header-info">
     <div class="info-badge"><strong>Paciente:</strong> Sofia Esquivel Navarro</div>
     <div class="info-badge"><strong>Condición:</strong> Lupus Eritematoso Sistémico (LES)</div>
@@ -1056,182 +1011,15 @@ async function applyAndDeploy(){
 
 </div><!-- end #app-content -->
 
-<script type="module">
-import { login, signup, logout, getUser, handleAuthCallback, requestPasswordRecovery, AuthError, MissingIdentityError } from 'https://esm.sh/@netlify/identity@0.4.2';
-
-// Process any auth callbacks (OAuth, confirmation, recovery)
-async function processCallback() {
-  try {
-    var result = await handleAuthCallback();
-    if (!result) return;
-    switch (result.type) {
-      case 'confirmation':
-        showAuthSuccess('Correo confirmado. Ya puedes iniciar sesión.');
-        break;
-      case 'recovery':
-        showAuthSuccess('Recuperación exitosa. Establece tu nueva contraseña.');
-        break;
-    }
-  } catch (e) {
-    if (e instanceof AuthError) showAuthError(e.message);
-  }
-}
-
-// Check if already authenticated
-async function checkAuth() {
-  await processCallback();
-  var user = await getUser();
-  if (user) {
-    showApp();
-  }
-}
-
-function showApp() {
-  document.getElementById('auth-overlay').classList.add('hidden');
-  document.getElementById('app-content').style.display = '';
-}
-
-function hideApp() {
-  document.getElementById('auth-overlay').classList.remove('hidden');
-  document.getElementById('app-content').style.display = 'none';
-}
-
-function showAuthError(msg) {
-  var el = document.getElementById('auth-error');
-  el.textContent = msg;
-  el.style.display = 'block';
-  document.getElementById('auth-success').style.display = 'none';
-}
-
-function showAuthSuccess(msg) {
-  var el = document.getElementById('auth-success');
-  el.textContent = msg;
-  el.style.display = 'block';
-  document.getElementById('auth-error').style.display = 'none';
-}
-
-function clearMessages() {
-  document.getElementById('auth-error').style.display = 'none';
-  document.getElementById('auth-success').style.display = 'none';
-}
-
-// Expose functions to global scope for onclick handlers
-window.handleLogin = async function(e) {
-  e.preventDefault();
-  clearMessages();
-  var btn = document.getElementById('login-btn');
-  btn.disabled = true;
-  btn.textContent = 'Ingresando...';
-  try {
-    await login(
-      document.getElementById('login-email').value,
-      document.getElementById('login-password').value
-    );
-    showApp();
-  } catch (error) {
-    if (error instanceof MissingIdentityError) {
-      showAuthError('Identity no está habilitado en este sitio.');
-    } else if (error instanceof AuthError) {
-      showAuthError(error.status === 401 ? 'Correo o contraseña incorrectos.' : error.message);
-    } else {
-      showAuthError('Error inesperado. Inténtalo de nuevo.');
-    }
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Iniciar Sesión';
-  }
-  return false;
-};
-
-window.handleSignup = async function(e) {
-  e.preventDefault();
-  clearMessages();
-  var btn = document.getElementById('signup-btn');
-  btn.disabled = true;
-  btn.textContent = 'Creando cuenta...';
-  try {
-    var user = await signup(
-      document.getElementById('signup-email').value,
-      document.getElementById('signup-password').value,
-      { full_name: document.getElementById('signup-name').value }
-    );
-    if (user.emailVerified) {
-      showApp();
-    } else {
-      showAuthSuccess('Revisa tu correo para confirmar tu cuenta.');
-    }
-  } catch (error) {
-    if (error instanceof AuthError) {
-      showAuthError(error.status === 403 ? 'Los registros están deshabilitados.' : error.message);
-    } else {
-      showAuthError('Error al crear la cuenta. Inténtalo de nuevo.');
-    }
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Crear Cuenta';
-  }
-  return false;
-};
-
-window.handleRecovery = async function(e) {
-  e.preventDefault();
-  clearMessages();
-  var btn = document.getElementById('recovery-btn');
-  btn.disabled = true;
-  btn.textContent = 'Enviando...';
-  try {
-    await requestPasswordRecovery(document.getElementById('recovery-email').value);
-    showAuthSuccess('Revisa tu correo para el enlace de recuperación.');
-  } catch (error) {
-    if (error instanceof AuthError) showAuthError(error.message);
-    else showAuthError('Error al enviar. Inténtalo de nuevo.');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Enviar Enlace de Recuperación';
-  }
-  return false;
-};
-
-window.handleLogout = async function() {
-  try {
-    await logout();
-  } catch (_) {}
-  hideApp();
-};
-
-window.showLogin = function() {
-  clearMessages();
-  document.getElementById('login-form').style.display = '';
-  document.getElementById('signup-form').style.display = 'none';
-  document.getElementById('recovery-form').style.display = 'none';
-  document.getElementById('toggle-signup').style.display = '';
-  document.getElementById('toggle-login').style.display = 'none';
-  document.getElementById('auth-title').textContent = 'Iniciar Sesión';
-};
-
-window.showSignup = function() {
-  clearMessages();
-  document.getElementById('login-form').style.display = 'none';
-  document.getElementById('signup-form').style.display = '';
-  document.getElementById('recovery-form').style.display = 'none';
-  document.getElementById('toggle-signup').style.display = 'none';
-  document.getElementById('toggle-login').style.display = '';
-  document.getElementById('auth-title').textContent = 'Crear Cuenta';
-};
-
-window.showRecovery = function() {
-  clearMessages();
-  document.getElementById('login-form').style.display = 'none';
-  document.getElementById('signup-form').style.display = 'none';
-  document.getElementById('recovery-form').style.display = '';
-  document.getElementById('toggle-signup').style.display = 'none';
-  document.getElementById('toggle-login').style.display = '';
-  document.getElementById('auth-title').textContent = 'Recuperar Contraseña';
-};
-
-// Hide app content until auth check
-document.getElementById('app-content').style.display = 'none';
-checkAuth();
+<script>
+// Auth bypassed - content shown directly
+window.handleLogout = function() {};
+window.handleLogin = function(e) { if(e) e.preventDefault(); return false; };
+window.handleSignup = function(e) { if(e) e.preventDefault(); return false; };
+window.handleRecovery = function(e) { if(e) e.preventDefault(); return false; };
+window.showLogin = function() {};
+window.showSignup = function() {};
+window.showRecovery = function() {};
 </script>
 
 </body></html>
