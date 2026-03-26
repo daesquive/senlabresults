@@ -1,0 +1,7 @@
+{
+  "name": "senlabresults",
+  "private": true,
+  "dependencies": {
+    "@netlify/identity": "^0.4.2"
+  }
+}
